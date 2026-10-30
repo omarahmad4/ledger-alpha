@@ -64,3 +64,8 @@ CI runs root accounting tests/type/lint and the standalone Site's tests/type/lin
 The hosted workspace now defines typed, stable tri-state sorting for Holdings, Transactions, Decisions and Import preview. This is presentation state only: transactions sort before pagination and import commit uses canonical source records rather than the sorted view. See [the sorting specification](table-sorting.md) for every column, accessibility behavior and verification. Publication of the review branch is a separate step; merging source alone does not redeploy the Site.
 
 Repository checks also run a dependency-free offline privacy guard over current tracked files and reachable historical blobs. It reports locations/categories without printing matched values. Actual ledgers, exports, credentials and private audit reports belong outside Git. It does not classify arbitrary prose or replace review of public issues/comments.
+
+
+## Decision restoration on the next review branch
+
+Issue #20 restores the legacy gross-weighted/unweighted summaries, purchase-date outcomes and five-decision rolling mean, marked-reinvestment control and distinct Holdings view. Optional future reinvestment provenance survives validated JSON commands/backups without changing stable import identity or accounting. Runtime quality messages distinguish active conditions, model context and recorded notes. See [decision insights](decision-insights.md) for exact behavior and verification; this branch requires independent review before publication.

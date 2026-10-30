@@ -71,3 +71,9 @@ describe('verified option quote-unit persistence',()=>{
   const restored=await validateBackup(JSON.parse(JSON.stringify(saved.ledger)));expect(restored.entries[1].optionTermsSource).toContain('Synthetic verified');expect(restored.entries[2].allocations[0].quantity).toBeCloseTo(100,12);
  });
 });
+
+describe('explicit future reinvestment provenance',()=>{
+ it('persists preview metadata across commit, edit validation and portable backup without reclassifying older rows',async()=>{
+  await mutate('reinvest',deposit());const current=await readLedger('reinvest');const csv='Date,Type,Symbol,Quantity,Amount,Description\n2026-01-02,BUY,TEST,1,10,TEST dividend reinvestment';const rows=await previewCsv(csv,'self',current.ledger);const saved=await mutate('reinvest',{action:'import',key:'reinvest-batch',revision:current.revision,entries:rows.map(r=>r.entry)});const buy=saved.ledger.entries.find(e=>e.type==='BUY')!;expect(buy.reinvestment).toEqual({source:'broker-description'});expect(buy.notes).toBe('TEST dividend reinvestment');const restored=await validateBackup(saved.ledger);expect(restored.entries.find(e=>e.id===buy.id)?.reinvestment).toEqual(buy.reinvestment);const edited=await mutate('reinvest',{action:'save',key:'edit-reinvest',revision:saved.revision,entry:{...buy,notes:'Edited description; provenance retained'}});expect(edited.ledger.entries.find(e=>e.id===buy.id)?.reinvestment).toEqual(buy.reinvestment);const legacy=await validateBackup({...saved.ledger,entries:saved.ledger.entries.map(e=>({...e,reinvestment:undefined}))});expect(legacy.entries.every(e=>e.reinvestment==null)).toBe(true);
+ });
+});

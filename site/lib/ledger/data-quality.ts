@@ -1,0 +1,27 @@
+/** Read-only runtime data-quality conditions. Private dates/symbols derive from records; freeform audit notes are never parsed as current owner questions. */
+import {chronological,summarize} from './engine';
+import {calculateNetCash} from '../core/pool';
+import {buildFifoLots} from '../core/lots';
+import type {Ledger,Quote} from './types';
+import type {Decision} from './decision-insights';
+export interface QualityIssue {id:string;title:string;impact:string;action:string;view:'Settings'|'Transactions'|'Holdings'|'Decisions';refresh?:boolean;history?:boolean}
+/** Derive active conditions without certifying unresolved history or modifying any ledger data.
+ * @param ledger Stored or synthetic ledger. @param quotes Existing quote responses. @param decisions Existing raw decision output. @returns Active issues plus contextual historical notes. */
+export function dataQuality(ledger:Ledger,quotes:Record<string,Quote>,decisions:readonly Decision[]){
+ const issues:QualityIssue[]=[];const valuation=summarize(ledger,quotes);const positions=valuation.holdings;const events=chronological(ledger.entries);
+ if(ledger.reconciliation?.cashVerified===false)issues.push({id:'cash',title:'Cash is not statement-reconciled',impact:'Portfolio value, gains and ownership use reconstructed cash and historical cash-flow valuations. Recorded owner assignments are used as stored.',action:'Compare cash, unsettled cash and any margin liability with a same-date broker statement in Settings.',view:'Settings'});
+ const storedPriceSets=events.filter(e=>['DEPOSIT','WITHDRAWAL'].includes(e.type)&&e.navBeforeOverride==null&&Object.keys(e.valuationPrices??{}).length>0);
+ if(ledger.reconciliation&&storedPriceSets.length)issues.push({id:'historical-valuations',title:'Historical valuation provenance needs review',impact:`${storedPriceSets.length} reconstructed cash flows use stored price sets (${storedPriceSets[0].tradeDate} through ${storedPriceSets.at(-1)!.tradeDate}). Per-price verification status is not stored; historical ownership can depend on these inputs.`,action:'Review the associated pre-flow valuations and recorded reconstruction notes against source evidence. Existing owner assignments stay as stored.',view:'Transactions'});
+ let cash=0;const negative:string[]=[];let firstCapital:string|undefined;let firstAsset:string|undefined;
+ for(const e of events){if(e.type==='DEPOSIT'&&!firstCapital)firstCapital=e.tradeDate;if(['BUY','REWARD'].includes(e.type)&&!firstAsset)firstAsset=e.tradeDate;cash+=calculateNetCash([e]);if(cash< -1e-6)negative.push(e.tradeDate);}
+ if(ledger.cashPolicy==='reconstruction'&&firstAsset&&(!firstCapital||events.findIndex(e=>['BUY','REWARD'].includes(e.type))<events.findIndex(e=>e.type==='DEPOSIT')))issues.push({id:'opening',title:`Activity precedes recorded funding (${firstAsset})`,impact:'Opening capital coverage affects historical pool-unit prices and later ownership. A matching current position does not verify the opening history.',action:'Review the earliest activity and opening funding evidence in Transactions; retain the disclosed assumption until evidence resolves it.',view:'Transactions'});
+ if(ledger.cashPolicy==='reconstruction'&&negative.length)issues.push({id:'historical-cash',title:'Historical recorded cash falls below zero',impact:`First affected record: ${negative[0]}; last affected record: ${negative.at(-1)}. Missing cash activity or borrowing may affect historical cash-flow valuations, even if current cash is positive.`,action:'Review funding, transfers, record order and any confirmed borrowing for the affected period. Do not invent a balancing deposit.',view:'Transactions'});
+ const missing=positions.filter(h=>h.quote?.price==null).map(h=>h.symbol);const stale=positions.filter(h=>h.quote?.status==='stale').map(h=>h.symbol);const unknown=positions.filter(h=>h.multiplier==null).map(h=>h.symbol);
+ if(missing.length)issues.push({id:'missing-price',title:`Latest prices unavailable: ${missing.join(', ')}`,impact:'Total portfolio value and gains remain unavailable; known priced value is only a partial valuation.',action:'Refresh prices, then review the affected holdings if the provider remains unavailable.',view:'Holdings',refresh:true});
+ if(stale.length)issues.push({id:'stale-price',title:`Stale holding prices: ${stale.join(', ')}`,impact:'Displayed values use cached estimates; affected open decisions remain ungraded.',action:'Refresh prices and check each quote date in Holdings.',view:'Holdings',refresh:true});
+ if(unknown.length)issues.push({id:'option-terms',title:`Open option quote units unverified: ${unknown.join(', ')}`,impact:'These active positions cannot be valued from quoted premiums without a verified multiplier.',action:'Review the contract terms and multiplier source in the transaction editor; do not guess.',view:'Transactions'});
+ const ungraded=decisions.filter(d=>d.grade==null).length;
+ if(ungraded)issues.push({id:'ungraded',title:`${ungraded} purchase decision${ungraded===1?' is':'s are'} awaiting reliable inputs`,impact:'These rows stay visible but do not enter summary grades, beat rate, mean alpha or the timeline.',action:'Load benchmark history; check historical buy/sale prices and active quote freshness in Decisions.',view:'Decisions',history:true});
+ const converted=buildFifoLots(ledger.entries).filter(l=>l.corporateAction).length;
+ return {issues,knownValue:valuation.knownValue,converted,hasReconstruction:!!ledger.reconciliation,hasHistoricalOptions:events.some(e=>e.instrumentType==='OPTION')};
+}

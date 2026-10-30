@@ -3,9 +3,9 @@
 import {useMemo,useState} from 'react';
 import {nextSort,sortRows,type SortColumn,type SortConfig} from './table-sort';
 /** Own one table's independent sort state. Off restores the supplied row order exactly.
- * @param rows Canonical filtered rows. @param columns Typed data-column accessors. @returns Sorted view and controller. */
-export function useTableSort<T>(rows:readonly T[],columns:readonly SortColumn<T>[]){
- const [sortConfig,setSortConfig]=useState<SortConfig|null>(null);
+ * @param rows Canonical filtered rows. @param columns Typed data-column accessors. @param initialSort Initial presentation order, read only on mount. @returns Sorted view and controller. */
+export function useTableSort<T>(rows:readonly T[],columns:readonly SortColumn<T>[],initialSort:SortConfig|null=null){
+ const [sortConfig,setSortConfig]=useState<SortConfig|null>(initialSort);
  const items=useMemo(()=>sortRows(rows,sortConfig,columns),[rows,columns,sortConfig]);
  return {items,sortConfig,requestSort:(key:string)=>setSortConfig(current=>nextSort(current,key))};
 }

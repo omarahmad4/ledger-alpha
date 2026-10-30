@@ -23,7 +23,7 @@ export function decisionRows(ledger:Ledger,quotes:Record<string,Quote>,histories
     const actualReturn=actual==null?null:actual/lot.originalCostBasis-1;
     const benchmarkReturn=equivalent==null?null:equivalent/lot.originalCostBasis-1;
     const alpha=reliable?actualReturn!-benchmarkReturn!:null;
-    return {id:lot.id,symbol,date:lot.openedAt,invested:lot.originalCostBasis,value:actual,actualReturn,benchmarkReturn,alpha,grade:alpha==null?null:grade(alpha),active};
+    return {id:lot.id,symbol,date:lot.openedAt,purchaseGross:Math.abs(entry.grossAmount),notes:entry.notes,reinvestment:entry.reinvestment,invested:lot.originalCostBasis,value:actual,actualReturn,benchmarkReturn,alpha,grade:alpha==null?null:grade(alpha),active};
   });
 }
 /** Sample unit-price return at month ends and event dates. Unpriced points stay null for chart gaps. */

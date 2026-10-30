@@ -22,9 +22,11 @@ export const entryInput = z.object({
   grossAmount: z.number().finite().nonnegative().max(1e12),
   fee: z.number().finite().nonnegative().max(1e9).default(0),
   notes: z.string().max(1000).optional(),
+  reinvestment:z.object({source:z.literal('broker-description')}).strict().optional(),
   navBeforeOverride: z.number().finite().positive().max(1e15).optional(),
   splitMode: z.enum(['ratio','additional']).optional(),
 }).superRefine((v,ctx) => {
+  if(v.reinvestment&&v.type!=='BUY')ctx.addIssue({code:'custom',message:'Reinvestment metadata applies only to purchases.'});
   if (['BUY','SELL','SPLIT','CONVERSION','EXPIRY','REWARD'].includes(v.type) && (!v.symbol || !v.quantity)) ctx.addIssue({code:'custom',message:'Asset events require a symbol and positive quantity.'});
   if (!['SPLIT','CONVERSION','EXPIRY','REWARD'].includes(v.type) && v.grossAmount <= 0) ctx.addIssue({code:'custom',message:'Amount must be positive.'});
   if (['SPLIT','CONVERSION','EXPIRY','REWARD'].includes(v.type) && (v.grossAmount !== 0 || v.fee !== 0)) ctx.addIssue({code:'custom',message:'Non-cash asset events have no cash amount or fee.'});

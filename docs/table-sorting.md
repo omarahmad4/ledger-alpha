@@ -2,7 +2,7 @@
 
 As built on the review branch, 2026-10-30. Tracking: [#18](https://github.com/omarahmad4/ledger-alpha/issues/18). Deployment is a separate review/release step.
 
-Each meaningful data header cycles ascending → descending → off. A different column starts ascending. Each table has independent state; switching views preserves its current sort. Native header buttons support Enter and Space, show ↑/↓/↕ and expose `aria-sort` on column-scoped headers. Action buttons are not sortable data.
+Each meaningful data header cycles ascending → descending → off. A different column starts ascending. Each table has independent state. Holdings, Transactions and Import retain their state across views; the restored Decisions component starts with alpha descending when opened. Native header buttons support Enter and Space, show ↑/↓/↕ and expose `aria-sort` on column-scoped headers. Action buttons are not sortable data.
 
 `site/lib/ui/table-sort.ts` is the pure shared comparator. Numbers compare numerically, dates by their parsed time, and text with a case-insensitive natural collator. Empty, invalid and non-finite values are missing, remain last in both directions and never become zero. Equal values preserve input order. Off returns a copied canonical input order. No source array is mutated.
 
