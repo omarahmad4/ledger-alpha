@@ -51,3 +51,8 @@ erDiagram
 ## 3. SQLite Limitations & Type Handling
 - SQLite does not have a native `Decimal` type. Prisma emulates `Decimal` by storing values as numeric floats or strings, and maps them to decimal classes in JavaScript/TypeScript.
 - SQLite does not support native `enums`. Prisma represents them as strings in the SQLite table with check constraints, mapping them to native TypeScript enums on the client side.
+
+
+## Hosted edition (2026-10-29)
+
+The supported cross-device edition lives in `site/` and uses private ChatGPT sign-in plus user-scoped D1 records. See [the as-built hosting specification](../sites-hosting.md) for its data model, accounting replay, prior-session cash-flow pricing, split conventions, atomic import/deduplication, quote freshness, storage bounds and recovery workflow. Root Prisma/API descriptions above describe the retained local prototype, not the hosted storage/write path. No production seed or reset runs.

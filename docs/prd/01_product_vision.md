@@ -37,3 +37,8 @@ It shifts the focus from passive balance tracking to **ledger-based economic own
 ## 3. Target Audience
 - **Primary Operator**: Partner 1 (handles CSV imports, enters manual entries, analyzes decision scoring).
 - **Partners**: Partner 2 & Partner 3 (receive accurate cost-basis tracking, position value breakdown, and allocation summaries).
+
+
+## Hosted edition (2026-10-29)
+
+The supported cross-device edition lives in `site/` and uses private ChatGPT sign-in plus user-scoped D1 records. See [the as-built hosting specification](../sites-hosting.md) for its data model, accounting replay, prior-session cash-flow pricing, split conventions, atomic import/deduplication, quote freshness, storage bounds and recovery workflow. Root Prisma/API descriptions above describe the retained local prototype, not the hosted storage/write path. No production seed or reset runs.

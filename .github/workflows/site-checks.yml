@@ -1,0 +1,32 @@
+name: LedgerAlpha Site checks
+on:
+  push:
+    branches: [master, 'feature/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            site/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - name: Install the standalone Site
+        working-directory: site
+        run: npm run install:ci
+      - name: Verify Site financial and API regressions
+        working-directory: site
+        run: npm test && npm run typecheck && npm run lint
+      - name: Build the production Worker
+        working-directory: site
+        run: npm run build

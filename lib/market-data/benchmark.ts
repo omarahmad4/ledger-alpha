@@ -5,7 +5,8 @@
  */
 
 import { BenchmarkType } from '@prisma/client';
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+const yahooFinance = new YahooFinance();
 import { prisma } from '../db/prisma';
 
 /**

@@ -34,3 +34,8 @@ Before committing imported rows, we inspect the database:
 - When CSV rows are committed, new assets are created if they do not exist.
 - Cash deposits and withdrawals are credited or debited to the respective owner.
 - Buys and sells are recorded at the portfolio level, and allocations are locked based on the pool's unit weights at the transaction's timestamp.
+
+
+## Hosted edition (2026-10-29)
+
+The supported cross-device edition lives in `site/` and uses private ChatGPT sign-in plus user-scoped D1 records. See [the as-built hosting specification](../sites-hosting.md) for its data model, accounting replay, prior-session cash-flow pricing, split conventions, atomic import/deduplication, quote freshness, storage bounds and recovery workflow. Root Prisma/API descriptions above describe the retained local prototype, not the hosted storage/write path. No production seed or reset runs.

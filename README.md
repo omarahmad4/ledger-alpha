@@ -1,5 +1,8 @@
 # LedgerAlpha
 
+> **Private hosted edition:** The new `site/` application runs as an owner-private ChatGPT Site with durable D1 storage, validated manual entry/editing, atomic retry-safe CSV imports, honest missing/stale price handling, JSON recovery and a mobile UI. Start with [the hosting guide](docs/sites-hosting.md). The original local Next/Prisma prototype below remains separate and must not be exposed as a production server. No personal ledger data is seeded into the hosted edition.
+
+
 A local-first portfolio analytics application for tracking ownership, performance, and investment decisions within a shared brokerage account.
 
 LedgerAlpha was created to solve a problem traditional brokerage dashboards do not address well: multiple people contributing to one investment account at different times and in different amounts.
