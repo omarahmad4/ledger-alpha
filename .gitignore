@@ -8,3 +8,32 @@ coverage
 *.tsbuildinfo
 actual_data.csv
 
+
+# Private local inputs, exports and recoverable backups belong outside source control.
+.env.*
+!.env.example
+!.env.sample
+.dev.vars*
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.ofx
+*.qfx
+*.pem
+*.key
+*.bundle
+*.tar.gz
+exports/
+backups/
+private-inputs/
+private-audit/
+# Explicitly synthetic financial fixtures may be reviewed and committed.
+!tests/fixtures/synthetic/*.csv
+!tests/fixtures/synthetic/*.tsv
+!site/tests/fixtures/synthetic/*.csv
+!site/tests/fixtures/synthetic/*.tsv

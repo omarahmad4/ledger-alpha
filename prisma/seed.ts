@@ -34,7 +34,7 @@ async function getHistoricalTransactions(beforeDate: Date): Promise<TransactionI
 
 // Simple lookup map for historical price simulations in seed math
 const seedPricesAtDate: Record<string, Record<string, number>> = {
-  // '2023-09-15': prices before Dad's deposit
+  // '2023-09-15': simulated prices before the later synthetic contribution
   '2023-09-15': {
     AMZN: 130,
     AAPL: 175,
