@@ -100,7 +100,7 @@ export async function previewCsv(csv:string,partnerId:string,ledger:Ledger,cashF
         const normalized=normalizeRobinhoodRow({...row,'Trade Date':day,'Trans Code':code==='GMPC'?'MISC':code},{accountId:'personal',assetLookup:()=>undefined,defaultAllocations:[]});
         if(!normalized)throw new Error('Missing or invalid trade date.');
         if(normalized.type==='SPLIT'&&(quantity??0)<0)throw new Error('Reverse-split share reductions require a verified manual ratio entry.');
-        entry={...normalized,tradeDate:day,symbol:normalized.assetSymbol?.toUpperCase(),partnerId:source.cashFlow?selected:undefined,splitMode:normalized.type==='SPLIT'?'additional':undefined,notes:source.description||normalized.notes};
+        entry={...normalized,tradeDate:day,symbol:normalized.assetSymbol?.toUpperCase(),partnerId:source.cashFlow?selected:undefined,splitMode:normalized.type==='SPLIT'?'additional':undefined,notes:source.description||normalized.notes,reinvestment:normalized.type==='BUY'&&normalized.notes==='Dividend Reinvestment'?{source:'broker-description'}:undefined};
         const fee=entry.fee??0;
         if(source.amount&&entry.type==='BUY')entry.grossAmount-=fee;
         if(source.amount&&entry.type==='SELL')entry.grossAmount+=fee;

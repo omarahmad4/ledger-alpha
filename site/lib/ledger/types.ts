@@ -4,6 +4,7 @@ export type { TransactionType };
 export const TYPES = ['DEPOSIT','WITHDRAWAL','BUY','SELL','DIVIDEND','FEE','SPLIT','CONVERSION','EXPIRY','REWARD'] as const;
 export interface Partner { id: string; name: string }
 export interface Entry extends LedgerTransaction {
+  reinvestment?: {source:'broker-description'};
   symbol?: string; partnerId?: string; externalId?: string;
   valuationPrices?: Record<string, number>; valuationDate?: string;
   navBeforeOverride?: number; splitMode?: 'ratio' | 'additional'; splitOrigin?: 'inferred' | 'csv' | 'manual';
