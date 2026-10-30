@@ -1,186 +1,77 @@
 # LedgerAlpha
 
-> **Private hosted edition:** The new `site/` application runs as an owner-private ChatGPT Site with durable D1 storage, validated manual entry/editing, atomic retry-safe CSV imports, honest missing/stale price handling, JSON recovery and a mobile UI. Start with [the hosting guide](docs/sites-hosting.md). The original local Next/Prisma prototype below remains separate and must not be exposed as a production server. No personal ledger data is seeded into the hosted edition.
+LedgerAlpha makes a shared investment account understandable: who owns what, how that ownership changes when someone adds money, and how individual purchases compare with a benchmark.
 
+I started with a gap in ordinary brokerage dashboards. An account can contain money contributed by several people at different times, but its balance alone does not explain each person's share. Dividing today's balance by total contributions also gives misleading results when the investments changed value between deposits.
 
-A local-first portfolio analytics application for tracking ownership, performance, and investment decisions within a shared brokerage account.
+The product uses a unitized pool. Contributions buy units at the portfolio value immediately before the cash flow; withdrawals redeem units. Trades belong to the pool, while units determine each partner's economic share.
 
-LedgerAlpha was created to solve a problem traditional brokerage dashboards do not address well: multiple people contributing to one investment account at different times and in different amounts.
+## The experience
 
-Rather than dividing the account equally, LedgerAlpha uses a unitized pool model to calculate each partner’s economic ownership as the portfolio changes.
+The active application is the private hosted edition in [`site/`](site/README.md). It provides ChatGPT sign-in, an owner-private access policy and a separate durable ledger for each authenticated user. A running personal computer is unnecessary. Prices refresh on opening the workspace or on request, with a five-minute cache; this is not a continuous market feed.
 
-## What It Does
+The main workflows are:
 
-### Pooled Ownership Accounting
+- **Understand the account:** portfolio value, cash, contributions, gains, a unit-price performance chart and partner ownership.
+- **Inspect positions:** quantities, quote freshness, remaining FIFO basis, value, gains and portfolio weight.
+- **Reconstruct activity:** manual transactions or a CSV preview with explicit cash-flow owners, source chronology and duplicate detection. Invalid batches save nothing.
+- **Review purchases:** FIFO purchase cohorts compared with SPY or QQQ, including realized proceeds and the remaining position. Grades are benchmark-relative price-return outcomes, not a measure of investment skill.
+- **Keep control of the records:** editable partners, portable JSON backups, CSV reporting and revision-based recovery.
 
-Each deposit purchases units in the shared portfolio based on its value at that time. This makes it possible to track:
+Tables support stable ascending, descending and off sorting, including keyboard controls. Missing values stay last. Sorting an import preview changes its display, while the import retains its selected source order and record identities.
 
-- Different contribution amounts
-- Partners joining at different times
-- Changing ownership percentages
-- Each partner’s share of cash and investments
-- Partner-level portfolio value and returns
+## A simple ownership example
 
-Trades occur at the portfolio level, while their value is distributed according to each partner’s current ownership share.
+These figures are synthetic. Alex contributes $1,000 at a unit price of $1 and receives 1,000 units. The pool rises to $1,200, so each unit is worth $1.20. Sam then contributes $600 and receives 500 units. Alex owns two-thirds of the resulting pool and Sam owns one-third. Sam's arrival does not create a return for Alex.
 
-### Robinhood CSV Import
+This rule makes contribution timing explicit. It also makes historical valuation important: incomplete funding history or uncertain cash-flow valuations can affect every later ownership calculation. The interface keeps those assumptions visible rather than promising precision the source records cannot support.
 
-LedgerAlpha can import Robinhood-style account activity from a CSV file.
+## Product and engineering decisions
 
-The import workflow:
+| Decision | Why it matters | Tradeoff |
+| --- | --- | --- |
+| Unit-based ownership | Separates contributions from investment performance | Requires reliable pre-flow portfolio values |
+| Preview, validate and replay an entire import | Prevents partial histories and inconsistent ownership | Ambiguous or unsupported rows require review |
+| User-scoped D1 storage and revision checks | Supports cross-device use, atomic backups and conflicting browser edits | Each personal ledger is bounded to 5,000 transactions / 1.5 MB |
+| Missing prices remain unavailable | Avoids treating an unknown holding as worthless | Some totals and decision grades are withheld |
+| Manual records and CSV imports | Avoids collecting brokerage credentials | No automatic brokerage synchronization |
+| Separate Worker application | Fits the Sites runtime while retaining the original local prototype | Feature parity must be checked explicitly between editions |
 
-1. Parses and normalizes brokerage activity
-2. Separates deposits and withdrawals from trades
-3. Lets the user assign cash flows to the appropriate partner
-4. Detects duplicate transactions
-5. Creates new assets when necessary
-6. Commits the reviewed activity to the portfolio ledger
+The hosted application uses React, TypeScript, Vinext/Cloudflare Workers, D1, Zod, Papa Parse and Recharts. Pure accounting modules are shared with the original Next.js/Prisma prototype. Identity, validation and persistence stay on the server. Economic partners are separate from login identities; inviting someone to the Site does not share another user's ledger.
 
-The importer recognizes purchases, sales, deposits, withdrawals, dividends, fees, stock splits, and several Robinhood transaction codes.
+## Current boundaries and known gaps
 
-### Portfolio Dashboard
+The original local prototype still exists under root `app/`, `components/`, `lib/` and `prisma/`. It includes weighted/unweighted decision summary metrics and a decision-quality timeline that have not yet been ported into the hosted edition. The hosted Overview and Holdings layouts also overlap. ETF constituent look-through is described in issues [#15](https://github.com/omarahmad4/ledger-alpha/issues/15) and [#16](https://github.com/omarahmad4/ledger-alpha/issues/16), but no implementation is present in the reachable repository history inspected for this review. These are gaps, not shipped hosted features.
 
-The dashboard provides an account-level overview including:
+Market data uses unofficial Yahoo sources and may be delayed or unavailable. Historical daily closes approximate intraday cash flows. Decision benchmarks exclude dividends; stale/missing inputs and unverified corporate-action continuity can leave purchases ungraded. LedgerAlpha records analysis only: it cannot execute trades, and it is not a tax reporting system.
 
-- Total portfolio value
-- Capital contributed
-- Portfolio gains and losses
-- Cash balance and cash drag
-- Allocation across stocks, ETFs, cryptocurrency, and cash
-- Portfolio value by partner
-- Investment decision beat rate versus the S&P 500
+There are no published user research results or measured business outcomes claimed here. The repository documents the problem, working behavior, technical tradeoffs and remaining limitations so the product can be assessed from evidence.
 
-### Partner and Portfolio Holdings
+## Run and verify
 
-Holdings can be viewed either as a consolidated portfolio or by individual partner.
+Use Node 24 for the hosted application. Setup, local database migrations and the private publication workflow are in [the hosting guide](docs/sites-hosting.md).
 
-Each view includes:
-
-- Pool units and ownership percentage
-- Asset quantity
-- Current market price
-- Market value
-- Cost basis
-- Gains and losses
-- Investment return
-
-### Performance Benchmarking
-
-LedgerAlpha compares the portfolio’s unit-level performance with the S&P 500 using SPY.
-
-Because performance is calculated through net asset value per pool unit, deposits made by different partners do not artificially inflate the portfolio’s reported investment return.
-
-### Investment Decision Scorecards
-
-Every purchase is treated as an investment decision and compared with investing the same capital in SPY on the same date.
-
-Each decision includes:
-
-- Actual return
-- Equivalent SPY return
-- Excess return, or alpha
-- Current or closed status
-- Letter grade from A to F
-
-The Decisions dashboard also provides:
-
-- Decision beat rate
-- Average decision grade
-- Average excess return
-- Value-weighted and unweighted analysis
-- A timeline showing how decision quality changed over time
-
-### FIFO Lot Tracking
-
-Sales are matched against the earliest available purchase lots using FIFO accounting.
-
-This allows LedgerAlpha to evaluate both active positions and investments that have been partially or fully sold.
-
-## Technology
-
-- TypeScript
-- Next.js and React
-- Prisma ORM
-- SQLite
-- Yahoo Finance market data
-- Recharts
-- Papa Parse
-- Zod
-- Vitest
-- Playwright
-- Docker
-
-## Application Structure
-
-```text
-app/                     Next.js pages, API routes, and UI components
-components/              Shared interface components
-lib/accounting/          Pool ownership, holdings, and FIFO calculations
-lib/data/                Ledger and analytics data services
-lib/market-data/         Current and historical market-price retrieval
-lib/robinhood-import/    CSV normalization
-lib/scoring/             Investment decision grading
-prisma/                  Database schema, migrations, and sample data
-tests/                   Accounting and import unit tests
-e2e/                     Browser-based workflow tests
-docs/                    Product, accounting, and architecture documentation
-```
-
-## Getting Started
-
-### Requirements
-
-- Node.js 20 or later
-- npm
-
-### Installation
-
-```bash
-git clone https://github.com/omarahmad4/ledger-alpha.git
-cd ledger-alpha
-
-cp .env.example .env
-npm install
-npx prisma generate
-npx prisma migrate deploy
-```
-
-To populate a new development database with synthetic sample data:
-
-```bash
-npm run prisma:seed
-```
-
-> Seeding replaces the contents of the configured database. Only run it against a new or disposable development database.
-
-Start the application:
-
-```bash
+```sh
+npm ci
+npm test
+npx tsc --noEmit
+npm run lint
+npm run privacy:check -- --history
+cd site
+npm run install:ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+Root tests exercise shared accounting and the repository privacy guard; Site tests cover financial replay, imports, corporate actions, valuations, APIs and sorting. Local browser checks use synthetic records in a separate local database. Never seed a populated or production database. The original local Prisma server has no production access-control boundary and should stay local; its E2E tests require an explicitly disposable database.
 
-## Testing
+Keep actual transactions, names, balances, environment credentials, exports and screenshots outside public source. The offline privacy guard blocks selected credential patterns and private-file formats; it complements source/history review and cannot prove that arbitrary prose contains no personal information.
 
-```bash
-npm test
-npm run lint
-npm run test:e2e
-```
+## Building with AI
 
-## Product Motivation
+I use AI-assisted development to turn the product rules into working software, tests and documentation. Codex and earlier coding agents contributed implementation and iteration. The source history and tests provide the inspectable record; the portfolio framing does not imply that I manually authored every line or that automated tests establish financial accuracy.
 
-I built LedgerAlpha after encountering a shared-account problem that conventional brokerage dashboards were not designed to solve.
-
-The project reflects the kind of product work I enjoy: beginning with a real user problem, defining the underlying business and accounting rules, and translating complicated data into a practical decision-making experience.
-
-It also gave me an opportunity to explore portfolio accounting, financial benchmarking, data visualization, and AI-assisted product development within a full-stack application.
-
-## Current Scope
-
-LedgerAlpha is currently a local, single-account analytics application. It does not execute trades, provide automatic brokerage synchronization, support production user accounts, or offer tax and investment advice.
-
-## Disclaimer
-
-LedgerAlpha is an educational portfolio-analysis project. It does not provide investment, financial, tax, accounting, or legal advice.
+See [the accounting specification](docs/prd/02_accounting_model.md), [hosting architecture](docs/sites-hosting.md) and [sorting specification](docs/table-sorting.md) for implementation detail.

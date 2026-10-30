@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import {sortRows,nextSort} from '../../site/lib/ui/table-sort';
 
 export type SortOrder = 'asc' | 'desc' | null;
 
@@ -41,58 +42,10 @@ export function getNestedValue(obj: any, path: string): any {
 export function useSortableData<T>(items: T[], defaultSort: SortConfig | null = null) {
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(defaultSort);
 
-  const sortedItems = useMemo(() => {
-    const sortableItems = [...items];
-    if (sortConfig && sortConfig.order) {
-      sortableItems.sort((a: any, b: any) => {
-        let aVal = getNestedValue(a, sortConfig.key);
-        let bVal = getNestedValue(b, sortConfig.key);
+  const sortedItems = useMemo(() => sortRows(items, sortConfig?.order ? {key:sortConfig.key,order:sortConfig.order} : null, sortConfig ? [{key:sortConfig.key,value:(row:T)=>getNestedValue(row,sortConfig.key),kind:'auto'}] : []), [items,sortConfig]);
 
-        // Normalize undefined or null to bottom
-        if (aVal === undefined || aVal === null) return 1;
-        if (bVal === undefined || bVal === null) return -1;
-
-        // If string, perform locale-sensitive case-insensitive compare
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          return sortConfig.order === 'asc'
-            ? aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' })
-            : bVal.localeCompare(aVal, undefined, { numeric: true, sensitivity: 'base' });
-        }
-
-        // Date sorting check
-        if (aVal instanceof Date && bVal instanceof Date) {
-          return sortConfig.order === 'asc'
-            ? aVal.getTime() - bVal.getTime()
-            : bVal.getTime() - aVal.getTime();
-        }
-
-        // Try date string check
-        const aTime = Date.parse(aVal);
-        const bTime = Date.parse(bVal);
-        if (!isNaN(aTime) && !isNaN(bTime) && typeof aVal === 'string') {
-          return sortConfig.order === 'asc' ? aTime - bTime : bTime - aTime;
-        }
-
-        // Fallback numeric/general sorting
-        if (aVal < bVal) return sortConfig.order === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortConfig.order === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [items, sortConfig]);
-
-  const requestSort = (key: string) => {
-    let nextOrder: SortOrder = 'asc';
-    if (sortConfig && sortConfig.key === key) {
-      if (sortConfig.order === 'asc') {
-        nextOrder = 'desc';
-      } else if (sortConfig.order === 'desc') {
-        nextOrder = null;
-      }
-    }
-    setSortConfig(nextOrder ? { key, order: nextOrder } : null);
-  };
+  /** Cycle the selected header without mutating source rows. */
+  const requestSort = (key:string) => setSortConfig(current => nextSort(current?.order?{key:current.key,order:current.order}:null,key));
 
   return { items: sortedItems, requestSort, sortConfig };
 }
@@ -122,19 +75,12 @@ export function SortableHeader({
   if (order === 'asc') indicator = '▲';
   if (order === 'desc') indicator = '▼';
 
+  const next=order==='asc'?'descending':order==='desc'?'off':'ascending';
   return (
-    <th
-      className={`sortable ${className}`}
-      onClick={() => onRequestSort(sortKey)}
-      style={{ userSelect: 'none', cursor: 'pointer' }}
-      {...props}
-    >
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-        <span>{children}</span>
-        <span className="sort-indicator" style={{ opacity: isSorted ? 1 : 0.35, fontSize: '10px' }}>
-          {indicator}
-        </span>
-      </div>
+    <th scope="col" aria-sort={order==='asc'?'ascending':order==='desc'?'descending':'none'} className={`sortable ${className}`} {...props}>
+      <button type="button" onClick={()=>onRequestSort(sortKey)} title={`Sort ${next}`} style={{background:'none',border:0,padding:0,color:'inherit',font:'inherit',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}>
+        <span>{children}</span><span aria-hidden="true" className="sort-indicator" style={{opacity:isSorted?1:0.35,fontSize:10}}>{indicator}</span><span style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}> Sort {next}</span>
+      </button>
     </th>
   );
 }

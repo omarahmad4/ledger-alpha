@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -17,6 +19,8 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             site/package-lock.json
+      - name: Check source and history for guarded private files and secrets
+        run: npm run privacy:check -- --history
       - run: npm ci --no-audit --no-fund
       - run: npm test
       - run: npx tsc --noEmit
