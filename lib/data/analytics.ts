@@ -208,7 +208,6 @@ export async function getPerformanceChartData(): Promise<any[]> {
 
           await prisma.price.createMany({
             data: priceData,
-            skipDuplicates: true,
           });
         }
       } catch (err) {

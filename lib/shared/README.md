@@ -1,0 +1,1 @@
+The hosted Site imports the pure accounting modules in `lib/accounting` and domain types directly. The local Next/Prisma application remains available independently; the Site does not access the local SQLite database.

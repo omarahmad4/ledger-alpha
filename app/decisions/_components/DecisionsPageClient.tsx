@@ -145,7 +145,7 @@ export function DecisionsPageClient({ initialDecisionRows }: DecisionsPageClient
                 <RechartsTooltip 
                   contentStyle={{ background: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }} 
                   labelStyle={{ fontWeight: 600, color: '#cbd5e1' }}
-                  formatter={(value: any, name: string) => {
+                  formatter={(value, name) => {
                     const label = name === 'alpha' ? 'Decision Alpha' : '5-Decision Rolling Avg';
                     return [`${Number(value).toFixed(2)}%`, label];
                   }}

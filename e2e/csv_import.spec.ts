@@ -5,27 +5,16 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
-import fs from 'fs';
+import { execFileSync } from 'child_process';
 
 test.describe('LedgerAlpha CSV Ingestion E2E Tests', () => {
   test.beforeAll(async () => {
-    // Back up user dev database to prevent E2E seeds from overwriting actual uploaded data
-    if (fs.existsSync('prisma/dev.db.bak')) {
-      fs.copyFileSync('prisma/dev.db.bak', 'prisma/dev.db');
-    } else if (fs.existsSync('prisma/dev.db')) {
-      fs.copyFileSync('prisma/dev.db', 'prisma/dev.db.bak');
+    // Never seed or copy a user database. E2E requires an explicit disposable path.
+    if (!/^file:\/.*ledger-alpha-e2e\.db$/.test(process.env.DATABASE_URL ?? '')) {
+      throw new Error('Set DATABASE_URL=file:/absolute/disposable/path/ledger-alpha-e2e.db and run the test server with the same value.');
     }
-    // Reset database to seed baseline values before E2E testing
-    execSync('npx tsx prisma/seed.ts', { stdio: 'ignore' });
-  });
-
-  test.afterAll(async () => {
-    // Restore user dev database
-    if (fs.existsSync('prisma/dev.db.bak')) {
-      fs.copyFileSync('prisma/dev.db.bak', 'prisma/dev.db');
-      fs.unlinkSync('prisma/dev.db.bak');
-    }
+    execFileSync('npx', ['prisma', 'migrate', 'deploy'], { stdio: 'ignore' });
+    execFileSync('npx', ['tsx', 'prisma/seed.ts'], { stdio: 'ignore' });
   });
 
   test('should handle raw CSV upload, per-cashflow partner assignment, and duplicate prevention', async ({ page }) => {

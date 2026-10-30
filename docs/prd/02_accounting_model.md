@@ -91,3 +91,8 @@ While ownership is managed at the unit pool level, individual buying decisions (
 - When a `BUY` transaction occurs, a new lot is recorded.
 - When a `SELL` transaction occurs, the units sold are deducted from the earliest open lots (FIFO).
 - Each lot's performance is graded by comparing its return to a benchmark (e.g. SPY) over the exact holding duration of that lot.
+
+
+## Hosted edition (2026-10-29)
+
+The supported cross-device edition lives in `site/` and uses private ChatGPT sign-in plus user-scoped D1 records. See [the as-built hosting specification](../sites-hosting.md) for its data model, accounting replay, prior-session cash-flow pricing, split conventions, atomic import/deduplication, quote freshness, storage bounds and recovery workflow. Root Prisma/API descriptions above describe the retained local prototype, not the hosted storage/write path. No production seed or reset runs.

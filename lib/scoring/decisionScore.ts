@@ -19,6 +19,7 @@ export interface DecisionScoreResult {
   benchmarkReturnPct: number;
   excessReturnPct: number;
   grade: DecisionGrade;
+  isActive: boolean;
 }
 
 function pct(current: number, initial: number): number {
@@ -136,7 +137,7 @@ export async function scoreTransactionDecision(
         console.warn(`Could not fetch historical benchmark price on sale date ${sellDate}`, err);
       }
 
-      const costBasisSold = sale.quantity * (lot.originalCostBasis / lot.originalQuantity);
+      const costBasisSold = sale.costBasis;
       const unitsSold = costBasisSold / benchmarkPriceBuy;
       const benchmarkProceeds = unitsSold * benchmarkPriceSell;
       valBenchmarkRealized += benchmarkProceeds;

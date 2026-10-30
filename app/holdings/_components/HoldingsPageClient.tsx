@@ -255,7 +255,7 @@ export function HoldingsPageClient({
                 <RechartsTooltip 
                   contentStyle={{ background: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }} 
                   labelStyle={{ fontWeight: 600, color: '#cbd5e1' }}
-                  formatter={(val: number) => [`${val.toFixed(2)}%`]}
+                  formatter={(val) => `${Number(val ?? 0).toFixed(2)}%`}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 13 }} />
                 <Line 

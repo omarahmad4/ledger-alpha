@@ -1,3 +1,5 @@
+> **Historical notes — legacy local prototype.** This file records an earlier development stage and is not the current hosted specification. For the implemented private Site, accounting/import behavior and deployment/recovery instructions, use [the as-built hosting guide](sites-hosting.md).
+
 # Build Notes
 
 ## Product direction
